@@ -1,0 +1,15 @@
+{% extends "inventory/base.html" %}
+{% block title %}Очистить данные{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Очистить все мои данные?</h1></div>
+<div class="form-card">
+    <p>Будут удалены все ваши <strong>товары</strong> (с QR-кодами) и <strong>вся история продаж</strong>. Это необратимо. Аккаунт и кассиры останутся.</p>
+    <form method="post" style="margin-top:16px">
+        {% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Да, удалить всё</button>
+            <a href="{% url 'account_settings' %}" class="btn">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

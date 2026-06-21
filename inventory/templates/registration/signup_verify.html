@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение email — QR Маркет</title>
+    <link rel="stylesheet" href="{% static 'inventory/style.css' %}">
+</head>
+<body>
+<div class="auth-page">
+    <div>
+        <div class="auth-logo">
+            <div class="auth-logo-icon">🟢</div>
+            <div class="auth-logo-name">QR Маркет</div>
+        </div>
+        <div class="auth-card">
+            <h1>Подтверждение email</h1>
+            <p class="hint">Мы отправили 6-значный код на <strong>{{ email }}</strong>. Введите код и придумайте пароль.</p>
+
+            {% if messages %}
+                {% for msg in messages %}
+                    <p class="error">{{ msg }}</p>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    <label for="id_code">Код из письма</label>
+                    {{ code_form.code }}
+                    {% for error in code_form.code.errors %}<p class="error">{{ error }}</p>{% endfor %}
+                </div>
+                {% for field in form %}
+                <div class="form-row">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+                    {% if field.help_text %}<div class="hint">{{ field.help_text|safe }}</div>{% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary" style="width:100%">Завершить регистрацию</button>
+            </form>
+
+            <p class="hint" style="text-align:center;margin-top:16px">
+                Не пришёл код? <a href="{% url 'signup' %}">Зарегистрироваться заново</a>
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

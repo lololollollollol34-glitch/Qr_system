@@ -1,0 +1,20 @@
+{% extends "inventory/base.html" %}
+{% block title %}Сброс системы{% endblock %}
+{% block content %}
+<div class="page-header"><h1>⚠️ Полный сброс системы</h1></div>
+<div class="form-card">
+    <p>Удалит <strong>абсолютно всё</strong>: все аккаунты владельцев и кассиров, товары, QR-коды, продажи и чеки. Останется только ваш суперпользователь. <strong>Необратимо.</strong></p>
+    <form method="post" style="margin-top:16px">
+        {% csrf_token %}
+        <div class="form-row">
+            <label for="{{ form.password.id_for_label }}">Введите ваш пароль для подтверждения</label>
+            {{ form.password }}
+            {% for error in form.password.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Да, удалить всё и начать заново</button>
+            <a href="{% url 'product_list' %}" class="btn">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

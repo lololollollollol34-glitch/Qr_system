@@ -1,0 +1,15 @@
+{% extends "inventory/base.html" %}
+{% block title %}Удалить кассира{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Удалить кассира?</h1></div>
+<div class="form-card">
+    <p>Вы уверены, что хотите удалить кассира <strong>{{ cashier.nickname }}</strong>? Доступ к системе будет отключён.</p>
+    <form method="post" style="margin-top:16px">
+        {% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Да, удалить</button>
+            <a href="{% url 'cashier_list' %}" class="btn">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

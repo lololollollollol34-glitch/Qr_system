@@ -1,0 +1,35 @@
+{% extends "inventory/base.html" %}
+{% block title %}Чек #{{ receipt.number }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Чек #{{ receipt.number }}</h1>
+    <a href="{% url 'receipts_list' %}" class="btn">← Назад</a>
+</div>
+<p class="hint" style="margin-bottom:16px">
+    {{ receipt.created_at|date:"d.m.Y H:i" }} · Кассир: {{ receipt.cashier.first_name|default:receipt.cashier.username|default:"—" }} · {{ receipt.get_payment_display }}
+</p>
+<table class="table">
+    <thead>
+        <tr><th>#</th><th>Товар</th><th>ID</th><th>Кол-во</th><th>Цена</th><th>Скидка</th><th>Сумма</th></tr>
+    </thead>
+    <tbody>
+        {% for item in receipt.items.all %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ item.name }}</td>
+            <td><code>{{ item.product_id_str }}</code></td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.price }} Сом</td>
+            <td>{{ item.discount }} Сом</td>
+            <td><strong>{{ item.total }} Сом</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr><td colspan="5"></td><td>Скидка:</td><td>{{ receipt.discount }} Сом</td></tr>
+        <tr><td colspan="5"></td><td><strong>Итого:</strong></td><td><strong>{{ receipt.total }} Сом</strong></td></tr>
+        <tr><td colspan="5"></td><td>Оплачено:</td><td>{{ receipt.paid }} Сом</td></tr>
+        <tr><td colspan="5"></td><td>Сдача:</td><td>{{ receipt.change }} Сом</td></tr>
+    </tfoot>
+</table>
+{% endblock %}

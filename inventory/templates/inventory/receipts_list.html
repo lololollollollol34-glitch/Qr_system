@@ -1,0 +1,48 @@
+{% extends "inventory/base.html" %}
+{% block title %}Чеки{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Чеки</h1>
+    <a href="{% url 'pos' %}" class="btn btn-primary">🖥 Открыть кассу</a>
+</div>
+{% if receipts %}
+<div class="stats-row" style="margin-bottom:20px">
+    <div class="stat-card">
+        <div class="stat-card__label">Всего чеков</div>
+        <div class="stat-card__value stat-card__value--green">{{ receipts|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__label">Выручка</div>
+        <div class="stat-card__value">{{ total_revenue }} Сом</div>
+    </div>
+</div>
+<table class="table">
+    <thead>
+        <tr><th>Чек #</th><th>Дата</th><th>Кассир</th><th>Товаров</th><th>Скидка</th><th>Итого</th><th>Оплата</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for r in receipts %}
+        <tr>
+            <td><strong>#{{ r.number }}</strong></td>
+            <td>{{ r.created_at|date:"d.m.Y H:i" }}</td>
+            <td>{{ r.cashier.first_name|default:r.cashier.username|default:"—" }}</td>
+            <td>{{ r.items.count }}</td>
+            <td>{{ r.discount }} Сом</td>
+            <td><strong>{{ r.total }} Сом</strong></td>
+            <td>{{ r.get_payment_display }}</td>
+            <td><a href="{% url 'receipt_detail' r.pk %}" class="btn btn-small">Детали</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr><td colspan="5">Итого:</td><td><strong>{{ total_revenue }} Сом</strong></td><td colspan="2"></td></tr>
+    </tfoot>
+</table>
+{% else %}
+<div class="empty-state">
+    <div style="font-size:3rem;margin-bottom:12px">🧾</div>
+    <p>Чеков пока нет.</p>
+    <a href="{% url 'pos' %}" class="btn btn-primary" style="margin-top:12px">🖥 Открыть кассу</a>
+</div>
+{% endif %}
+{% endblock %}

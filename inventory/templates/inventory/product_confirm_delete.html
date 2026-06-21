@@ -1,0 +1,15 @@
+{% extends "inventory/base.html" %}
+{% block title %}Удалить товар{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Удалить товар?</h1></div>
+<div class="form-card">
+    <p>Вы уверены, что хотите удалить <strong>{{ object.name }}</strong> (ID: {{ object.product_id }})? QR-код тоже удалится.</p>
+    <form method="post" style="margin-top:16px">
+        {% csrf_token %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Да, удалить</button>
+            <a href="{% url 'product_list' %}" class="btn">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

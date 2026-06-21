@@ -1,0 +1,306 @@
+{% extends "inventory/base.html" %}
+{% block title %}Касса{% endblock %}
+{% block content %}
+<div class="pos-wrap">
+
+  <div class="pos-header">
+    <div class="pos-title">Мой заказ #<span id="checkNum">{{ next_number }}</span></div>
+    <div class="pos-total-bar">ИТОГО К ОПЛАТЕ: <span id="totalBar">0.00</span> Сом</div>
+    <button class="btn btn-primary" onclick="openModal()" id="payBtn" disabled>Завершить (F6)</button>
+  </div>
+
+  <div class="pos-body">
+
+    <div class="pos-left">
+      <div class="pos-scan-row">
+        <input id="scanInput" class="form-control pos-scan-input"
+               placeholder="Штрих-код / ID + Enter" autofocus>
+        <button class="btn btn-primary" onclick="lookupByInput()">Добавить</button>
+      </div>
+
+      <div class="pos-catalog-search">
+        <input id="catalogSearch" class="form-control" placeholder="Поиск по каталогу...">
+      </div>
+      <div class="pos-catalog" id="catalogList"></div>
+    </div>
+
+    <div class="pos-right">
+      <table class="table pos-table" id="cartTable">
+        <thead>
+          <tr>
+            <th></th>
+            <th>#</th>
+            <th>Товар</th>
+            <th>ID</th>
+            <th>Кол-во</th>
+            <th>Цена</th>
+            <th>Скидка</th>
+            <th>Сумма</th>
+          </tr>
+        </thead>
+        <tbody id="cartBody">
+          <tr id="emptyRow">
+            <td colspan="8" style="text-align:center;color:#9ca3af;padding:32px">
+              Отсканируйте QR-код или добавьте товар из каталога
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="6"></td>
+            <td><strong>Скидка:</strong> <span id="footDiscount">0.00</span></td>
+            <td><strong><span id="footTotal">0.00</span></strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="overlay" onclick="closeModal()"></div>
+<div class="modal-box" id="modal">
+  <div class="modal-header">
+    <h2>Завершение заказа</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-grid">
+    <div class="modal-field">
+      <label>Стоимость заказа:</label>
+      <input class="form-control" id="mTotal" readonly>
+    </div>
+    <div class="modal-field">
+      <label>Оплачено ранее:</label>
+      <input class="form-control" value="0" readonly>
+    </div>
+    <div class="modal-field">
+      <label>Итого к оплате:</label>
+      <input class="form-control" id="mFinal" readonly>
+    </div>
+    <div class="modal-field">
+      <label>Сдача:</label>
+      <input class="form-control" id="mChange" readonly value="0">
+    </div>
+  </div>
+  <div class="modal-pay-input">
+    <label>Введите сумму оплаты:</label>
+    <input class="form-control pos-pay-amount" id="mPaid" type="number" min="0" value="0">
+  </div>
+  <div class="modal-options">
+    <div class="modal-radio-group">
+      <strong>Вид оплаты:</strong>
+      <label><input type="radio" name="payment" value="cash" checked> Наличными</label>
+      <label><input type="radio" name="payment" value="card"> Безналичными</label>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-primary" onclick="completeOrder()">Завершить (F6)</button>
+    <button class="btn" onclick="closeModal()">Отмена</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="successOverlay"></div>
+<div class="modal-box" id="successModal" style="display:none">
+  <div style="text-align:center;padding:12px">
+    <div style="font-size:3rem">✅</div>
+    <h2>Чек #<span id="successNum"></span> оформлен!</h2>
+    <p>Сдача: <strong id="successChange"></strong> Сом</p>
+    <button class="btn btn-primary" onclick="newOrder()">Новый заказ</button>
+  </div>
+</div>
+
+<script>
+const PRODUCTS = JSON.parse('{{ products_json|escapejs }}');
+let cart = [];
+let globalDiscount = 0;
+
+function renderCatalog(filter='') {
+  const list = document.getElementById('catalogList');
+  const fl = filter.toLowerCase();
+  const filtered = PRODUCTS.filter(p =>
+    p.name.toLowerCase().includes(fl) || p.product_id.toLowerCase().includes(fl)
+  );
+  list.innerHTML = filtered.map(p => `
+    <div class="catalog-item" onclick="addToCart(${p.id})">
+      <span class="catalog-name">${p.name}</span>
+      <span class="catalog-meta">${p.product_id} · ${p.price} Сом · ${p.quantity} шт.</span>
+    </div>
+  `).join('') || '<p style="color:#9ca3af;padding:8px">Ничего не найдено</p>';
+}
+
+document.getElementById('catalogSearch').addEventListener('input', e => {
+  renderCatalog(e.target.value);
+});
+
+document.getElementById('scanInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') lookupByInput();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'F6') { e.preventDefault(); if (cart.length) openModal(); }
+});
+
+function lookupByInput() {
+  const val = document.getElementById('scanInput').value.trim().toUpperCase();
+  if (!val) return;
+  fetch(`/pos/lookup/?code=${encodeURIComponent(val)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { alert(data.error); return; }
+      addToCart(data.id);
+      document.getElementById('scanInput').value = '';
+    });
+}
+
+function addToCart(productId) {
+  const p = PRODUCTS.find(x => x.id === productId);
+  if (!p) return;
+  const existing = cart.find(x => x.id === productId);
+  if (existing) {
+    if (existing.quantity >= p.quantity) { alert(`Максимум ${p.quantity} шт.`); return; }
+    existing.quantity++;
+  } else {
+    cart.push({ id: p.id, product_id: p.product_id, name: p.name,
+                price: parseFloat(p.price), quantity: 1,
+                discount: 0, maxQty: p.quantity });
+  }
+  renderCart();
+}
+
+function removeFromCart(idx) {
+  cart.splice(idx, 1);
+  renderCart();
+}
+
+function changeQty(idx, delta) {
+  const item = cart[idx];
+  const newQty = item.quantity + delta;
+  if (newQty < 1) { removeFromCart(idx); return; }
+  if (newQty > item.maxQty) { alert(`Максимум ${item.maxQty} шт.`); return; }
+  item.quantity = newQty;
+  renderCart();
+}
+
+function changeDiscount(idx, val) {
+  cart[idx].discount = Math.max(0, parseFloat(val) || 0);
+  renderCart();
+}
+
+function renderCart() {
+  const tbody = document.getElementById('cartBody');
+  if (cart.length === 0) {
+    tbody.innerHTML = `<tr id="emptyRow"><td colspan="8" style="text-align:center;color:#9ca3af;padding:32px">
+      Отсканируйте QR-код или добавьте товар из каталога</td></tr>`;
+    updateTotals();
+    return;
+  }
+  tbody.innerHTML = cart.map((item, i) => {
+    const line = (item.price - item.discount) * item.quantity;
+    return `<tr>
+      <td><button class="btn-icon" onclick="removeFromCart(${i})">🗑</button></td>
+      <td>${i + 1}</td>
+      <td>${item.name}</td>
+      <td><code>${item.product_id}</code></td>
+      <td>
+        <div class="qty-ctrl">
+          <button class="btn-icon" onclick="changeQty(${i},-1)">−</button>
+          <span>${item.quantity}</span>
+          <button class="btn-icon" onclick="changeQty(${i},1)">+</button>
+        </div>
+      </td>
+      <td>${item.price.toFixed(2)}</td>
+      <td><input type="number" min="0" value="${item.discount}" class="form-control disc-input"
+                 onchange="changeDiscount(${i}, this.value)"></td>
+      <td><strong>${line.toFixed(2)}</strong></td>
+    </tr>`;
+  }).join('');
+  updateTotals();
+}
+
+function updateTotals() {
+  const subtotal = cart.reduce((s, x) => s + (x.price - x.discount) * x.quantity, 0);
+  const total = Math.max(subtotal - globalDiscount, 0);
+  document.getElementById('totalBar').textContent = total.toFixed(2);
+  document.getElementById('footTotal').textContent = total.toFixed(2);
+  document.getElementById('footDiscount').textContent = globalDiscount.toFixed(2);
+  document.getElementById('payBtn').disabled = cart.length === 0;
+}
+
+function openModal() {
+  if (!cart.length) return;
+  const subtotal = cart.reduce((s, x) => s + (x.price - x.discount) * x.quantity, 0);
+  const final = Math.max(subtotal - globalDiscount, 0);
+  document.getElementById('mTotal').value = subtotal.toFixed(2);
+  document.getElementById('mFinal').value = final.toFixed(2);
+  document.getElementById('mPaid').value = final.toFixed(2);
+  document.getElementById('mChange').value = '0.00';
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('modal').style.display = 'block';
+  document.getElementById('mPaid').focus();
+  document.getElementById('mPaid').select();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('mPaid').addEventListener('input', () => {
+    const final = parseFloat(document.getElementById('mFinal').value) || 0;
+    const paid = parseFloat(document.getElementById('mPaid').value) || 0;
+    document.getElementById('mChange').value = Math.max(paid - final, 0).toFixed(2);
+  });
+});
+
+function closeModal() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('modal').style.display = 'none';
+}
+
+function completeOrder() {
+  const payment = document.querySelector('input[name="payment"]:checked').value;
+  const paid = parseFloat(document.getElementById('mPaid').value) || 0;
+  const final = parseFloat(document.getElementById('mFinal').value) || 0;
+  if (payment === 'cash' && paid < final) {
+    alert('Сумма оплаты меньше итого!'); return;
+  }
+  fetch('/pos/complete/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken'),
+    },
+    body: JSON.stringify({
+      items: cart,
+      paid: paid,
+      payment: payment,
+      discount: globalDiscount,
+    }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) { alert(data.error); return; }
+    closeModal();
+    document.getElementById('successNum').textContent = data.receipt_number;
+    document.getElementById('successChange').textContent = parseFloat(data.change).toFixed(2);
+    document.getElementById('successOverlay').style.display = 'block';
+    document.getElementById('successModal').style.display = 'block';
+  });
+}
+
+function newOrder() {
+  cart = [];
+  globalDiscount = 0;
+  renderCart();
+  document.getElementById('successOverlay').style.display = 'none';
+  document.getElementById('successModal').style.display = 'none';
+  location.reload();
+}
+
+function getCookie(name) {
+  let v = null;
+  document.cookie.split(';').forEach(c => {
+    c = c.trim();
+    if (c.startsWith(name + '=')) v = decodeURIComponent(c.slice(name.length + 1));
+  });
+  return v;
+}
+
+renderCatalog();
+</script>
+{% endblock %}

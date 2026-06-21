@@ -1,0 +1,20 @@
+{% extends "inventory/base.html" %}
+{% block title %}Настройки{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Настройки</h1></div>
+<div class="form-card danger-zone">
+    <h2>⚠️ Опасная зона</h2>
+    <p class="hint">Эти действия касаются только вашего аккаунта и ваших данных.</p>
+    <div class="danger-item">
+        <h3>Очистить мои данные</h3>
+        <p class="hint">Удалит все ваши товары, QR-коды и историю продаж. Аккаунт и кассиры останутся.</p>
+        <a href="{% url 'clear_my_data' %}" class="btn btn-danger">Очистить товары и продажи</a>
+    </div>
+    <hr>
+    <div class="danger-item">
+        <h3>Удалить мой аккаунт</h3>
+        <p class="hint">Полностью удалит ваш аккаунт, товары, продажи и аккаунты кассиров. Необратимо.</p>
+        <a href="{% url 'delete_my_account' %}" class="btn btn-danger">Удалить аккаунт навсегда</a>
+    </div>
+</div>
+{% endblock %}

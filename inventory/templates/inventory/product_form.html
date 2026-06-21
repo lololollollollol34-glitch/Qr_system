@@ -1,0 +1,58 @@
+{% extends "inventory/base.html" %}
+{% block title %}Добавить товар{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Добавить товар</h1>
+    <a href="{% url 'product_list' %}" class="btn">← Назад</a>
+</div>
+<div class="form-card">
+    <p class="hint">ID и QR-код сгенерируются автоматически после сохранения.</p>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-row">
+            <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+            {{ form.name }}
+            {% for error in form.name.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="form-row">
+            <label for="{{ form.price.id_for_label }}">{{ form.price.label }}</label>
+            {{ form.price }}
+            {% for error in form.price.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="form-row">
+            <label for="{{ form.quantity.id_for_label }}">{{ form.quantity.label }}</label>
+            {{ form.quantity }}
+            {% for error in form.quantity.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="form-row">
+            <label for="{{ form.photo.id_for_label }}">{{ form.photo.label }}</label>
+            <div class="photo-upload-area" id="photoArea">
+                <div class="photo-upload-icon">📷</div>
+                <div class="photo-upload-text">Нажмите или перетащите фото сюда</div>
+                {{ form.photo }}
+            </div>
+            <div id="photoPreview" style="display:none;margin-top:8px">
+                <img id="previewImg" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb">
+            </div>
+            {% for error in form.photo.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💾 Сохранить и создать QR</button>
+            <a href="{% url 'product_list' %}" class="btn">Отмена</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('id_photo').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        document.getElementById('previewImg').src = ev.target.result;
+        document.getElementById('photoPreview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+});
+</script>
+{% endblock %}

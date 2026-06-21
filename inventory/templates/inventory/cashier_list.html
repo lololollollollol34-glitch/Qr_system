@@ -1,0 +1,28 @@
+{% extends "inventory/base.html" %}
+{% block title %}Кассиры{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Кассиры</h1>
+    <a href="{% url 'cashier_add' %}" class="btn btn-primary">+ Добавить кассира</a>
+</div>
+{% if cashiers %}
+<table class="table">
+    <thead><tr><th>Логин</th><th>Дата создания</th><th></th></tr></thead>
+    <tbody>
+        {% for cashier in cashiers %}
+        <tr>
+            <td><strong>{{ cashier.nickname }}</strong></td>
+            <td>{{ cashier.user.date_joined|date:"d.m.Y H:i" }}</td>
+            <td><a href="{% url 'cashier_delete' cashier.pk %}" class="btn btn-small btn-danger">🗑 Удалить</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <div style="font-size:3rem;margin-bottom:12px">👤</div>
+    <p>Кассиров пока нет.</p>
+    <a href="{% url 'cashier_add' %}" class="btn btn-primary" style="margin-top:12px">+ Добавить кассира</a>
+</div>
+{% endif %}
+{% endblock %}

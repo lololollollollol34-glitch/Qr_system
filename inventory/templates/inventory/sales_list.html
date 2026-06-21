@@ -1,0 +1,50 @@
+{% extends "inventory/base.html" %}
+{% block title %}Продажи{% endblock %}
+{% block content %}
+<div class="page-header"><h1>История продаж</h1></div>
+{% if sales %}
+<div class="stats-row" style="margin-bottom:20px">
+    <div class="stat-card">
+        <div class="stat-card__label">Всего продаж</div>
+        <div class="stat-card__value stat-card__value--green">{{ sales|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__label">Общая сумма</div>
+        <div class="stat-card__value">{{ total_sum }} Сом</div>
+    </div>
+</div>
+<table class="table">
+    <thead>
+        <tr><th>Дата</th><th>Товар</th><th>ID</th><th>Кол-во</th><th>Цена</th><th>Сумма</th><th>Продавец</th></tr>
+    </thead>
+    <tbody>
+        {% for sale in sales %}
+        <tr>
+            <td>{{ sale.created_at|date:"d.m.Y H:i" }}</td>
+            <td>{{ sale.product.name }}</td>
+            <td><code>{{ sale.product.product_id }}</code></td>
+            <td>{{ sale.quantity }}</td>
+            <td>{{ sale.price }} Сом</td>
+            <td><strong>{{ sale.total }} Сом</strong></td>
+            <td>{{ sale.seller.first_name|default:sale.seller.username|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr><td colspan="5">Итого:</td><td><strong>{{ total_sum }} Сом</strong></td><td></td></tr>
+    </tfoot>
+</table>
+{% if is_paginated %}
+<div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn btn-small">← Назад</a>{% endif %}
+    <span class="hint">Стр. {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn btn-small">Вперёд →</a>{% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty-state">
+    <div style="font-size:3rem;margin-bottom:12px">📊</div>
+    <p>Продаж пока нет.</p>
+</div>
+{% endif %}
+{% endblock %}

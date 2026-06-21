@@ -1,0 +1,26 @@
+{% extends "inventory/base.html" %}
+{% block title %}Добавить кассира{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Добавить кассира</h1>
+    <a href="{% url 'cashier_list' %}" class="btn">← Назад</a>
+</div>
+<div class="form-card">
+    <p class="hint">Кассир сможет входить под этим логином и паролем. Логин должен быть уникальным только среди ваших кассиров — у других владельцев может быть кассир с таким же именем.</p>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-row">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+            {% if field.help_text %}<div class="hint">{{ field.help_text|safe }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Создать кассира</button>
+            <a href="{% url 'cashier_list' %}" class="btn">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

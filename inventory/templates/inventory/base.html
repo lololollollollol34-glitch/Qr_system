@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}QR Маркет{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'inventory/style.css' %}">
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar__brand">🟢 QR Маркет</div>
+    <div class="topbar__spacer"></div>
+    {% if user.is_authenticated %}
+    <span class="topbar__user">{{ user.first_name|default:user.username }}</span>
+    <form action="{% url 'logout' %}" method="post" class="inline-form">
+        {% csrf_token %}
+        <button type="submit" class="link-button">Выйти</button>
+    </form>
+    {% endif %}
+</header>
+
+<div class="layout">
+{% if user.is_authenticated %}
+<aside class="sidebar">
+    <div class="sidebar__section">
+        <div class="sidebar__label">Главное</div>
+        <a class="sidebar__link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}" href="{% url 'product_list' %}">
+            <span class="sidebar__icon">📦</span> Товары
+        </a>
+        <a class="sidebar__link {% if request.resolver_match.url_name == 'pos' %}active{% endif %}" href="{% url 'pos' %}">
+            <span class="sidebar__icon">🖥</span> Касса
+        </a>
+        <a class="sidebar__link {% if request.resolver_match.url_name == 'receipts_list' or request.resolver_match.url_name == 'receipt_detail' %}active{% endif %}" href="{% url 'receipts_list' %}">
+            <span class="sidebar__icon">🧾</span> Чеки
+        </a>
+        <a class="sidebar__link {% if request.resolver_match.url_name == 'sales_list' %}active{% endif %}" href="{% url 'sales_list' %}">
+            <span class="sidebar__icon">📊</span> Продажи
+        </a>
+    </div>
+
+    {% if user.profile.role == 'owner' %}
+    <hr class="sidebar__divider">
+    <div class="sidebar__section">
+        <div class="sidebar__label">Управление</div>
+        <a class="sidebar__link {% if request.resolver_match.url_name == 'cashier_list' or request.resolver_match.url_name == 'cashier_add' %}active{% endif %}" href="{% url 'cashier_list' %}">
+            <span class="sidebar__icon">👤</span> Кассиры
+        </a>
+        <a class="sidebar__link {% if request.resolver_match.url_name == 'account_settings' %}active{% endif %}" href="{% url 'account_settings' %}">
+            <span class="sidebar__icon">⚙️</span> Настройки
+        </a>
+    </div>
+    {% endif %}
+
+    {% if user.is_superuser %}
+    <hr class="sidebar__divider">
+    <div class="sidebar__section">
+        <a class="sidebar__link sidebar__link--danger" href="{% url 'system_reset' %}">
+            <span class="sidebar__icon">🗑</span> Сброс системы
+        </a>
+    </div>
+    {% endif %}
+</aside>
+{% endif %}
+
+<main class="main">
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="message message--{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+</div>
+
+</body>
+</html>

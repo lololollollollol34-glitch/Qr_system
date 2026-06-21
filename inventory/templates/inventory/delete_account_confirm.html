@@ -1,0 +1,20 @@
+{% extends "inventory/base.html" %}
+{% block title %}Удалить аккаунт{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Удалить аккаунт навсегда?</h1></div>
+<div class="form-card">
+    <p>Будут удалены: ваш аккаунт, все товары и QR-коды, вся история продаж и все аккаунты ваших кассиров. Введите пароль для подтверждения.</p>
+    <form method="post" style="margin-top:16px">
+        {% csrf_token %}
+        <div class="form-row">
+            <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+            {{ form.password }}
+            {% for error in form.password.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Да, удалить аккаунт</button>
+            <a href="{% url 'account_settings' %}" class="btn">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

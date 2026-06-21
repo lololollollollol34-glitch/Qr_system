@@ -1,0 +1,24 @@
+{% extends "inventory/base.html" %}
+{% block title %}Продажа{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Продать товар</h1>
+    <a href="{% url 'product_list' %}" class="btn">← Назад</a>
+</div>
+<div class="form-card">
+    <p style="font-weight:600;margin-bottom:4px">{{ product.name }}</p>
+    <p class="hint">ID: {{ product.product_id }} · Цена: {{ product.price|default:"—" }} Сом · На складе: {{ product.quantity }} шт.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <label for="{{ form.quantity.id_for_label }}">{{ form.quantity.label }}</label>
+            {{ form.quantity }}
+            {% for error in form.quantity.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Подтвердить продажу</button>
+            <a href="{% url 'product_list' %}" class="btn">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

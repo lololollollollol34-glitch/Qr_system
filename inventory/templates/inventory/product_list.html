@@ -1,0 +1,76 @@
+{% extends "inventory/base.html" %}
+{% block title %}Товары — QR Маркет{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h1>Товары</h1>
+    {% if is_owner %}
+    <a href="{% url 'product_add' %}" class="btn btn-primary">+ Добавить товар</a>
+    {% endif %}
+</div>
+
+{% if products %}
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-card__label">Всего позиций</div>
+        <div class="stat-card__value stat-card__value--green">{{ products|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__label">На складе (шт.)</div>
+        <div class="stat-card__value">{{ total_stock }}</div>
+    </div>
+</div>
+
+<div class="grid">
+    {% for product in products %}
+    <div class="card {% if product.quantity == 0 %}card--empty{% endif %}">
+        <div class="card__img">
+            {% if product.photo %}
+            <img src="{{ product.photo.url }}" alt="{{ product.name }}">
+            {% else %}
+            <div class="card__img-placeholder"><span>📦</span></div>
+            {% endif %}
+            {% if product.quantity == 0 %}
+            <div class="card__badge card__badge--empty">Нет в наличии</div>
+            {% elif product.quantity <= 5 %}
+            <div class="card__badge card__badge--low">Мало: {{ product.quantity }} шт.</div>
+            {% endif %}
+        </div>
+        <div class="card__body">
+            <h2 class="card__title">{{ product.name }}</h2>
+            <p class="card__id">ID: <code>{{ product.product_id }}</code></p>
+            {% if product.price %}
+            <p class="card__price">{{ product.price }} Сом</p>
+            {% endif %}
+            <p class="card__quantity {% if product.quantity == 0 %}card__quantity--empty{% endif %}">
+                {% if product.quantity == 0 %}⚠️ Нет в наличии{% else %}На складе: {{ product.quantity }} шт.{% endif %}
+            </p>
+        </div>
+        <div class="card__actions">
+            {% if product.quantity > 0 %}
+            <a href="{% url 'sell_product' product.pk %}" class="btn btn-small btn-primary">🛒 Продать</a>
+            {% endif %}
+            {% if is_owner %}
+            <a href="{% url 'restock_product' product.pk %}" class="btn btn-small">➕</a>
+            {% endif %}
+            <a href="{% url 'download_qr' product.pk %}" class="btn btn-small" title="Скачать QR">📄 QR</a>
+            {% if product.qr_code %}
+            <a href="{{ product.qr_code.url }}" target="_blank" class="btn btn-small" title="Печать QR">🖨</a>
+            {% endif %}
+            {% if is_owner %}
+            <a href="{% url 'product_delete' product.pk %}" class="btn btn-small btn-danger" title="Удалить">🗑</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📦</div>
+    <p>Пока нет товаров.</p>
+    {% if is_owner %}
+    <a href="{% url 'product_add' %}" class="btn btn-primary" style="margin-top:14px">+ Добавить первый товар</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
